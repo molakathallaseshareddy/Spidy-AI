@@ -1,3 +1,5 @@
+import json
+from dataclasses import dataclass
 from typing import Protocol
 
 import httpx
@@ -9,9 +11,27 @@ class LLMError(Exception):
     """Raised when the configured language model cannot complete a request."""
 
 
+@dataclass(frozen=True)
+class ToolCall:
+    name: str
+    arguments: dict[str, object]
+
+
+@dataclass(frozen=True)
+class LLMResponse:
+    content: str | None
+    tool_calls: list[ToolCall]
+    raw_message: dict[str, object]
+
+
 class LLMProvider(Protocol):
-    async def generate(self, *, system_prompt: str, user_message: str) -> str:
-        """Generate a response from the system and user messages."""
+    async def chat(
+        self,
+        *,
+        messages: list[dict[str, object]],
+        tools: list[dict[str, object]],
+    ) -> LLMResponse:
+        """Exchange a conversation, optionally enabling declared tools."""
 
 
 class OllamaProvider:
@@ -24,14 +44,17 @@ class OllamaProvider:
         self._settings = settings
         self._transport = transport
 
-    async def generate(self, *, system_prompt: str, user_message: str) -> str:
+    async def chat(
+        self,
+        *,
+        messages: list[dict[str, object]],
+        tools: list[dict[str, object]],
+    ) -> LLMResponse:
         request_body = {
             "model": self._settings.ollama_model,
             "stream": False,
-            "messages": [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_message},
-            ],
+            "messages": messages,
+            "tools": tools,
         }
 
         try:
@@ -55,10 +78,41 @@ class OllamaProvider:
 
         try:
             payload = response.json()
-            content = payload["message"]["content"]
+            raw_message = payload["message"]
         except (ValueError, KeyError, TypeError) as exc:
             raise LLMError("Ollama returned an invalid response.") from exc
 
-        if not isinstance(content, str) or not content.strip():
+        if not isinstance(raw_message, dict):
+            raise LLMError("Ollama returned an invalid response.")
+
+        content = raw_message.get("content")
+        if content is not None and not isinstance(content, str):
+            raise LLMError("Ollama returned an invalid response.")
+
+        raw_tool_calls = raw_message.get("tool_calls", [])
+        if not isinstance(raw_tool_calls, list):
+            raise LLMError("Ollama returned invalid tool calls.")
+
+        tool_calls: list[ToolCall] = []
+        for raw_call in raw_tool_calls:
+            try:
+                function = raw_call["function"]
+                name = function["name"]
+                arguments = function["arguments"]
+                if isinstance(arguments, str):
+                    arguments = json.loads(arguments)
+                if not isinstance(name, str) or not isinstance(arguments, dict):
+                    raise TypeError
+            except (KeyError, TypeError, json.JSONDecodeError) as exc:
+                raise LLMError("Ollama returned invalid tool calls.") from exc
+            tool_calls.append(ToolCall(name=name, arguments=arguments))
+
+        normalized_content = content.strip() if isinstance(content, str) else None
+        if not normalized_content and not tool_calls:
             raise LLMError("Ollama returned an empty response.")
-        return content.strip()
+
+        return LLMResponse(
+            content=normalized_content,
+            tool_calls=tool_calls,
+            raw_message=raw_message,
+        )

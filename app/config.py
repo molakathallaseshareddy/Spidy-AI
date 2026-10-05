@@ -1,5 +1,6 @@
 import os
 from dataclasses import dataclass
+from pathlib import Path
 
 
 @dataclass(frozen=True)
@@ -7,6 +8,7 @@ class Settings:
     ollama_base_url: str = "http://localhost:11434"
     ollama_model: str = "llama3.2"
     ollama_timeout_seconds: float = 60.0
+    workspace_root: Path = Path.cwd()
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -24,4 +26,7 @@ class Settings:
             ).rstrip("/"),
             ollama_model=model,
             ollama_timeout_seconds=timeout,
+            workspace_root=Path(
+                os.getenv("ASSISTANT_WORKSPACE_ROOT", str(Path.cwd()))
+            ).expanduser().resolve(),
         )

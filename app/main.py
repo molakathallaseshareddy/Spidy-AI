@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 from app.agent import Assistant
 from app.config import Settings
 from app.llm import LLMError, OllamaProvider
+from app.tools import build_tool_registry
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +30,8 @@ def create_app(
     app = FastAPI(title="AI Personal Assistant", version="0.1.0")
     configuration = settings or Settings.from_env()
     app.state.assistant = Assistant(
-        OllamaProvider(configuration, transport=ollama_transport)
+        OllamaProvider(configuration, transport=ollama_transport),
+        build_tool_registry(configuration.workspace_root),
     )
 
     @app.post("/api/assistant/message", response_model=MessageResponse)
@@ -37,7 +39,7 @@ def create_app(
         request_id = uuid4().hex
         started_at = time.perf_counter()
         try:
-            response = await app.state.assistant.respond(request.message)
+            response = await app.state.assistant.respond(request.message, request_id)
         except LLMError as exc:
             duration_ms = (time.perf_counter() - started_at) * 1000
             logger.warning(
