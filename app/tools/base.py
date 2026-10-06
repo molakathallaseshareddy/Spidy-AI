@@ -22,6 +22,7 @@ class ToolResult:
 class AssistantTool(Protocol):
     name: str
     description: str
+    permission_level: str
     input_model: type[BaseModel]
 
     async def execute(self, arguments: BaseModel) -> ToolResult:

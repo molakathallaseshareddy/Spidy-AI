@@ -43,26 +43,22 @@ class Assistant:
 
             if tool_round_count >= MAX_TOOL_ROUNDS:
                 raise LLMError("The assistant reached its tool-call limit.")
+            if tool_call_count + len(turn.tool_calls) > MAX_TOOL_CALLS:
+                raise LLMError("The assistant reached its tool-call limit.")
 
             messages.append(turn.raw_message)
             tool_round_count += 1
             for tool_call in turn.tool_calls:
-                if tool_call_count >= MAX_TOOL_CALLS:
-                    result = {
-                        "success": False,
-                        "error": "The assistant reached its tool-call limit.",
-                    }
-                else:
-                    started_at = time.perf_counter()
-                    result = await self._tools.execute(tool_call)
-                    tool_call_count += 1
-                    logger.info(
-                        "tool execution request_id=%s tool=%s success=%s duration_ms=%.1f",
-                        request_id,
-                        tool_call.name,
-                        result["success"],
-                        (time.perf_counter() - started_at) * 1000,
-                    )
+                started_at = time.perf_counter()
+                result = await self._tools.execute(tool_call)
+                tool_call_count += 1
+                logger.info(
+                    "tool execution request_id=%s tool=%s success=%s duration_ms=%.1f",
+                    request_id,
+                    tool_call.name,
+                    result["success"],
+                    (time.perf_counter() - started_at) * 1000,
+                )
                 messages.append(
                     {
                         "role": "tool",

@@ -1,9 +1,13 @@
+import logging
+
 from pydantic import BaseModel, ValidationError
 
 from app.llm import ToolCall
 from app.tools.applications import ApplicationLauncherTool
 from app.tools.base import AssistantTool
 from app.tools.filesystem import FileSystemTools, ListDirectoryTool, ReadFileTool
+
+logger = logging.getLogger(__name__)
 
 
 class ToolRegistry:
@@ -39,6 +43,7 @@ class ToolRegistry:
         try:
             return (await tool.execute(arguments)).to_dict()
         except Exception:
+            logger.exception("tool execution raised tool=%s", call.name)
             return {"success": False, "error": "Tool execution failed unexpectedly."}
 
 

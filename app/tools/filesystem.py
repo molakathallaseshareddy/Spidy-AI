@@ -64,6 +64,7 @@ class FileSystemTools:
 class ReadFileTool:
     name = "read_file"
     description = "Read a UTF-8 text file inside the configured assistant workspace."
+    permission_level = "low"
     input_model = PathInput
 
     def __init__(self, filesystem: FileSystemTools) -> None:
@@ -83,6 +84,7 @@ class ReadFileTool:
 class ListDirectoryTool:
     name = "list_directory"
     description = "List actual files and directories inside the configured workspace."
+    permission_level = "low"
     input_model = ListDirectoryInput
 
     def __init__(self, filesystem: FileSystemTools) -> None:

@@ -22,6 +22,7 @@ class ApplicationLauncherTool:
         "Launch an installed application by supported name: chrome, edge, notepad, "
         "or calculator. No command arguments are accepted."
     )
+    permission_level = "low"
     input_model = OpenApplicationInput
 
     @staticmethod
