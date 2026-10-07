@@ -5,6 +5,7 @@ from pydantic import BaseModel, ValidationError
 from app.llm import ToolCall
 from app.tools.applications import ApplicationLauncherTool
 from app.tools.base import AssistantTool
+from app.tools.browser import BrowserSearchTool
 from app.tools.filesystem import FileSystemTools, ListDirectoryTool, ReadFileTool
 
 logger = logging.getLogger(__name__)
@@ -54,5 +55,6 @@ def build_tool_registry(workspace_root) -> ToolRegistry:
             ListDirectoryTool(filesystem),
             ReadFileTool(filesystem),
             ApplicationLauncherTool(),
+            BrowserSearchTool(),
         ]
     )
