@@ -15,12 +15,10 @@ python -m venv .venv
 .venv\Scripts\Activate.ps1
 python -m pip install -r requirements.txt
 python -m playwright install chromium
-$env:OLLAMA_BASE_URL = "http://localhost:11434"
-$env:OLLAMA_MODEL = "llama3.2"
-$env:ASSISTANT_WORKSPACE_ROOT = (Get-Location).Path
+Copy-Item .env.example .env
 ```
 
-The same settings can be exported in the shell or service environment. `.env.example` documents them; the application does not load `.env` files automatically.
+Edit `.env` with your Ollama URL, an installed model name (check with `ollama list`), timeout, and workspace root. The app loads `.env` automatically; environment variables already set in the process take precedence.
 
 ## Run
 
