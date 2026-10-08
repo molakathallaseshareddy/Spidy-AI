@@ -40,7 +40,7 @@ class Assistant:
             turn = await self._llm.chat(messages=messages, tools=available_tools)
             if not turn.tool_calls:
                 if not turn.content:
-                    raise LLMError("Ollama returned an empty response.")
+                    raise LLMError("The model returned an empty response.")
                 return turn.content
 
             if tool_round_count >= MAX_TOOL_ROUNDS:
@@ -64,7 +64,7 @@ class Assistant:
                 messages.append(
                     {
                         "role": "tool",
-                        "tool_name": tool_call.name,
+                        "tool_call_id": tool_call.call_id,
                         "content": json.dumps(result, ensure_ascii=True),
                     }
                 )

@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field
 
 from app.agent import Assistant
 from app.config import Settings
-from app.llm import LLMError, OllamaProvider
+from app.llm import LLMError, OpenAIProvider
 from app.tools import build_tool_registry
 
 logger = logging.getLogger(__name__)
@@ -25,12 +25,12 @@ class MessageResponse(BaseModel):
 def create_app(
     settings: Settings | None = None,
     *,
-    ollama_transport: httpx.AsyncBaseTransport | None = None,
+    llm_transport: httpx.AsyncBaseTransport | None = None,
 ) -> FastAPI:
     app = FastAPI(title="AI Personal Assistant", version="0.1.0")
     configuration = settings or Settings.from_env()
     app.state.assistant = Assistant(
-        OllamaProvider(configuration, transport=ollama_transport),
+        OpenAIProvider(configuration, transport=llm_transport),
         build_tool_registry(configuration.workspace_root),
     )
 

@@ -10,29 +10,27 @@ _ENV_FILE = Path(__file__).resolve().parent.parent / ".env"
 
 @dataclass(frozen=True)
 class Settings:
-    ollama_base_url: str = "http://localhost:11434"
-    ollama_model: str = "llama3.2"
-    ollama_timeout_seconds: float = 60.0
+    openai_api_key: str = ""
+    openai_model: str = "gpt-4o-mini"
+    openai_timeout_seconds: float = 60.0
     workspace_root: Path = Path.cwd()
 
     @classmethod
     def from_env(cls) -> "Settings":
         load_dotenv(_ENV_FILE, override=False)
 
-        timeout = float(os.getenv("OLLAMA_TIMEOUT_SECONDS", "60"))
+        timeout = float(os.getenv("OPENAI_TIMEOUT_SECONDS", "60"))
         if timeout <= 0:
-            raise ValueError("OLLAMA_TIMEOUT_SECONDS must be greater than zero.")
+            raise ValueError("OPENAI_TIMEOUT_SECONDS must be greater than zero.")
 
-        model = os.getenv("OLLAMA_MODEL", "llama3.2").strip()
+        model = os.getenv("OPENAI_MODEL", "gpt-4o-mini").strip()
         if not model:
-            raise ValueError("OLLAMA_MODEL must not be empty.")
+            raise ValueError("OPENAI_MODEL must not be empty.")
 
         return cls(
-            ollama_base_url=os.getenv(
-                "OLLAMA_BASE_URL", "http://localhost:11434"
-            ).rstrip("/"),
-            ollama_model=model,
-            ollama_timeout_seconds=timeout,
+            openai_api_key=os.getenv("OPENAI_API_KEY", "").strip(),
+            openai_model=model,
+            openai_timeout_seconds=timeout,
             workspace_root=Path(
                 os.getenv("ASSISTANT_WORKSPACE_ROOT", str(Path.cwd()))
             ).expanduser().resolve(),
